@@ -51,7 +51,7 @@ def main():
         # Шаг 4: Конвейер обработки 10 файлов
         for i in range(1, 11):
             config_url = f"https://raw.githubusercontent.com/capitainblack/freetm3/refs/heads/main/configs/sub_{i}.txt"
-            local_image_path = f"templates/black_{i}.png"
+            local_image_path = f"templates/pic_{i}.png"
             wiki_filename = f"{WIKI_FILE_PREFIX}_{i:02d}.png" # Имя на Вики: префикс_01.png, префикс_02.png...
 
             print(f"\n[*] Обработка пары №{i}...")
