@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Клонируем твой репозиторий, чтобы скрипт увидел папку templates/ с картинками black_1.png ... black_10.png
+    # 1. Клонируем твой репозиторий, чтобы скрипт увидел папку templates/ с картинками pic_1.jpg ... pic_11.jpg
     - name: Клонирование репозитория
       uses: actions/checkout@v4
 
