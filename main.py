@@ -13,7 +13,6 @@ USERNAME = os.getenv("WIKI_USER")
 PASSWORD = os.getenv("WIKI_PASS")
 
 # Название, под которым файлы будут жить на Википедии.
-# Можешь изменить префикс на любой другой, но номер (01-10) выставится автоматически.
 WIKI_FILE_PREFIX = "Procedural_grunge_texture"
 
 def main():
@@ -48,11 +47,11 @@ def main():
         r3 = session.get(url=WIKI_API_URL, params={"action": "query", "meta": "tokens", "type": "csrf", "format": "json"}).json()
         csrf_token = r3["query"]["tokens"]["csrftoken"]
 
-        # Шаг 4: Конвейер обработки 10 файлов
+        # Шаг 4: Конвейер обработки первых 10 файлов (ОСТАЛСЯ БЕЗ ИЗМЕНЕНИЙ)
         for i in range(1, 11):
             config_url = f"https://raw.githubusercontent.com/capitainblack/freetm3/refs/heads/main/configs/sub_{i}.txt"
             local_image_path = f"templates/pic_{i}.jpg"
-            wiki_filename = f"{WIKI_FILE_PREFIX}_{i:02d}.jpg" # Имя на Вики: префикс_01.png, префикс_02.png...
+            wiki_filename = f"{WIKI_FILE_PREFIX}_{i:02d}.jpg" 
 
             print(f"\n[*] Обработка пары №{i}...")
             
@@ -108,6 +107,81 @@ def main():
             # Удаляем временный файл
             if os.path.exists(temp_output):
                 os.remove(temp_output)
+
+        # ==========================================
+        # НОВОЕ: ОБРАБОТКА 11-Й КАРТИНКИ (TOR BRIDGES)
+        # ==========================================
+        print("\n[*] Обработка специальной картинки №11 (Tor Bridges)...")
+        local_image_path_11 = "templates/pic_11.jpg"
+        wiki_filename_11 = f"{WIKI_FILE_PREFIX}_11.jpg"
+
+        if not os.path.exists(local_image_path_11):
+            print(f"[!] Ошибка: Локальный шаблон {local_image_path_11} не найден! Пропуск 11-й картинки.")
+        else:
+            bridge_urls = [
+                "https://raw.githubusercontent.com/Delta-Kronecker/Tor-Bridges-Collector/refs/heads/main/bridge/webtunnel.txt",
+                "https://raw.githubusercontent.com/Delta-Kronecker/Tor-Bridges-Collector/refs/heads/main/bridge/vanilla.txt",
+                "https://raw.githubusercontent.com/Delta-Kronecker/Tor-Bridges-Collector/refs/heads/main/bridge/obfs4.txt"
+            ]
+            
+            combined_bridges_content = b""
+            download_success = True
+
+            # Скачиваем данные со всех трех ссылок и объединяем их
+            for url in bridge_urls:
+                try:
+                    resp = session.get(url, timeout=15)
+                    resp.raise_for_status()
+                    # Если в буфере уже что-то есть, добавляем перенос строки перед новыми данными
+                    if combined_bridges_content and resp.content:
+                        combined_bridges_content += b"\n"
+                    combined_bridges_content += resp.content.strip()
+                    print(f"[+] Успешно скачан файл: {url.split('/')[-1]}")
+                except Exception as e:
+                    print(f"[!] Ошибка при скачивании {url}: {e}")
+                    download_success = False
+                    break
+
+            if download_success and len(combined_bridges_content) > 0:
+                # Формируем payload для 11-й картинки
+                secret_filename_11 = b"bridges.txt"
+                payload_11 = MAGIC_MARKER + secret_filename_11 + SEPARATOR + combined_bridges_content
+
+                # Читаем картинку pic_11.jpg
+                with open(local_image_path_11, 'rb') as f:
+                    image_bytes_11 = f.read()
+
+                # Склеиваем донор №11 и новые данные мостов
+                final_container_bytes_11 = image_bytes_11 + payload_11
+                temp_output_11 = "temp_stego_upload_11.png"
+
+                with open(temp_output_11, 'wb') as f:
+                    f.write(final_container_bytes_11)
+
+                # Загружаем на Википедию
+                print(f"[*] Загрузка {wiki_filename_11} (Bridges) на Викисклад...")
+                with open(temp_output_11, 'rb') as file_data:
+                    upload_params_11 = {
+                        "action": "upload",
+                        "filename": wiki_filename_11,
+                        "token": csrf_token,
+                        "ignorewarnings": "1",
+                        "comment": "Daily assets revision and compression optimization.",
+                        "format": "json"
+                    }
+                    r4_11 = session.post(WIKI_API_URL, files={"file": file_data}, data=upload_params_11).json()
+                    
+                    result_11 = r4_11.get("upload", {}).get("result")
+                    if result_11 == "Success":
+                        print(f"[+] Успешно! Файл {wiki_filename_11} обновлен.")
+                    else:
+                        print(f"[-] Ошибка загрузки {wiki_filename_11}. Ответ API: {r4_11}")
+
+                # Удаляем временный файл
+                if os.path.exists(temp_output_11):
+                    os.remove(temp_output_11)
+            else:
+                print("[-] Пропуск 11-й картинки из-за ошибок скачивания или пустых данных мостов.")
 
     except Exception as e:
         print(f"[!] Критическая ошибка в работе скрипта: {e}")
