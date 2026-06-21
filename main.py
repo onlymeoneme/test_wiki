@@ -47,7 +47,7 @@ def main():
         r3 = session.get(url=WIKI_API_URL, params={"action": "query", "meta": "tokens", "type": "csrf", "format": "json"}).json()
         csrf_token = r3["query"]["tokens"]["csrftoken"]
 
-        # Шаг 4: Конвейер обработки первых 10 файлов (ОСТАЛСЯ БЕЗ ИЗМЕНЕНИЙ)
+        # Шаг 4: Конвейер обработки первых 10 файлов
         for i in range(1, 11):
             config_url = f"https://raw.githubusercontent.com/capitainblack/freetm3/refs/heads/main/configs/sub_{i}.txt"
             local_image_path = f"templates/pic_{i}.jpg"
@@ -113,7 +113,9 @@ def main():
         # ==========================================
         print("\n[*] Обработка специальной картинки №11 (Tor Bridges)...")
         local_image_path_11 = "templates/pic_11.jpg"
-        wiki_filename_11 = f"{WIKI_FILE_PREFIX}_11.jpg"
+        
+        # ===> ЗДЕСЬ МЕНЯЕТСЯ НАЗВАНИЕ ДЛЯ 11-Й КАРТИНКИ <===
+        wiki_filename_11 = "Make_new_file.jpg" 
 
         if not os.path.exists(local_image_path_11):
             print(f"[!] Ошибка: Локальный шаблон {local_image_path_11} не найден! Пропуск 11-й картинки.")
