@@ -77,7 +77,7 @@ def main():
             config_url = f"https://raw.githubusercontent.com/capitainblack/freetm3/refs/heads/main/configs/sub_{i}.txt"
             
             # Твои новые исходные картинки
-            local_image_path = f"templates/car_paint_texture_{i}.png"
+            local_image_path = f"templates/car_pain_texture_{i}.png"
             # Финальное имя на Вики теперь тоже строго .png
             wiki_filename = f"{WIKI_FILE_PREFIX}_{i:02d}.png" 
 
@@ -154,7 +154,7 @@ def main():
         time.sleep(sleep_time_11)
 
         print("[*] Обработка специальной картинки №11 (Tor Bridges)...")
-        local_image_path_11 = "templates/car_paint_texture_11.png"
+        local_image_path_11 = "templates/car_pain_texture_11.png"
         # ИСПРАВЛЕНО: Никаких "Make_new_file.jpg". Теперь это идеальное продолжение серии.
         wiki_filename_11 = f"{WIKI_FILE_PREFIX}_11.png" 
 
