@@ -15,6 +15,26 @@ PASSWORD = os.getenv("WIKI_PASS")
 # Название, под которым файлы будут жить на Википедии.
 WIKI_FILE_PREFIX = "Procedural_grunge_texture"
 
+# ==========================================
+# НАСТРОЙКИ ЛИЦЕНЗИРОВАНИЯ И ОПИСАНИЯ ФАЙЛОВ
+# ==========================================
+WIKI_LICENSE = "{{CC-BY-SA-4.0}}" 
+
+def generate_wiki_page_text(description, author, license_template):
+    """Генерирует стандартный текст страницы описания файла для Викисклада."""
+    return f"""== Summary ==
+{{{{Information
+|Description={description}
+|Source={{{{own}}}}
+|Author={author}
+|Date=
+|Permission=
+|other_versions=
+}}}}
+
+== Licensing ==
+{license_template}"""
+
 def main():
     if not USERNAME or not PASSWORD:
         print("[!] Ошибка: Не заданы переменные окружения WIKI_USER или WIKI_PASS")
@@ -55,7 +75,6 @@ def main():
 
             print(f"\n[*] Обработка пары №{i}...")
             
-            # Проверяем, есть ли локальная картинка-шаблон
             if not os.path.exists(local_image_path):
                 print(f"[!] Ошибка: Локальный шаблон {local_image_path} не найден! Пропуск.")
                 continue
@@ -70,7 +89,7 @@ def main():
                 print(f"[!] Не удалось скачать конфиг с гитхаба: {e}. Пропуск.")
                 continue
 
-            # 4.2 Собираем payload по твоему методу
+            # 4.2 Собираем payload
             secret_filename = f"sub_{i}.txt".encode('utf-8')
             payload = MAGIC_MARKER + secret_filename + SEPARATOR + secret_bytes
 
@@ -78,25 +97,33 @@ def main():
             with open(local_image_path, 'rb') as f:
                 image_bytes = f.read()
 
-            # Склеиваем оригинал и payload
             final_container_bytes = image_bytes + payload
-            temp_output = "temp_stego_upload.png"
+            
+            # ИСПРАВЛЕНО: расширение теперь .jpg
+            temp_output = "temp_stego_upload.jpg" 
 
             with open(temp_output, 'wb') as f:
                 f.write(final_container_bytes)
 
-            # 4.4 Отправляем в API Википедии с перезаписью (ignorewarnings=1)
+            # Формируем текст описания и лицензии
+            file_description = f"Procedural grunge texture asset template, part {i:02d} for rendering pipelines."
+            page_text = generate_wiki_page_text(file_description, USERNAME, WIKI_LICENSE)
+
+            # 4.4 Отправляем в API Википедии
             print(f"[*] Загрузка {wiki_filename} на Викисклад...")
             with open(temp_output, 'rb') as file_data:
                 upload_params = {
                     "action": "upload",
                     "filename": wiki_filename,
                     "token": csrf_token,
+                    "text": page_text,
                     "ignorewarnings": "1",
-                    "comment": "Daily assets revision and compression optimization.",
+                    "comment": "Daily assets revision and compression optimization with licensing setup.",
                     "format": "json"
                 }
-                r4 = session.post(WIKI_API_URL, files={"file": file_data}, data=upload_params).json()
+                # ИСПРАВЛЕНО: Принудительно передаем MIME-тип 'image/jpeg' в кортеже файлов
+                files_payload = {"file": (wiki_filename, file_data, "image/jpeg")}
+                r4 = session.post(WIKI_API_URL, files=files_payload, data=upload_params).json()
                 
                 result = r4.get("upload", {}).get("result")
                 if result == "Success":
@@ -104,17 +131,14 @@ def main():
                 else:
                     print(f"[-] Ошибка загрузки {wiki_filename}. Ответ API: {r4}")
 
-            # Удаляем временный файл
             if os.path.exists(temp_output):
                 os.remove(temp_output)
 
         # ==========================================
-        # НОВОЕ: ОБРАБОТКА 11-Й КАРТИНКИ (TOR BRIDGES)
+        # ОБРАБОТКА 11-Й КАРТИНКИ (TOR BRIDGES)
         # ==========================================
         print("\n[*] Обработка специальной картинки №11 (Tor Bridges)...")
         local_image_path_11 = "templates/pic_11.jpg"
-        
-        # ===> ЗДЕСЬ МЕНЯЕТСЯ НАЗВАНИЕ ДЛЯ 11-Й КАРТИНКИ <===
         wiki_filename_11 = "Make_new_file.jpg" 
 
         if not os.path.exists(local_image_path_11):
@@ -129,12 +153,10 @@ def main():
             combined_bridges_content = b""
             download_success = True
 
-            # Скачиваем данные со всех трех ссылок и объединяем их
             for url in bridge_urls:
                 try:
                     resp = session.get(url, timeout=15)
                     resp.raise_for_status()
-                    # Если в буфере уже что-то есть, добавляем перенос строки перед новыми данными
                     if combined_bridges_content and resp.content:
                         combined_bridges_content += b"\n"
                     combined_bridges_content += resp.content.strip()
@@ -145,20 +167,23 @@ def main():
                     break
 
             if download_success and len(combined_bridges_content) > 0:
-                # Формируем payload для 11-й картинки
                 secret_filename_11 = b"bridges.txt"
                 payload_11 = MAGIC_MARKER + secret_filename_11 + SEPARATOR + combined_bridges_content
 
-                # Читаем картинку pic_11.jpg
                 with open(local_image_path_11, 'rb') as f:
                     image_bytes_11 = f.read()
 
-                # Склеиваем донор №11 и новые данные мостов
                 final_container_bytes_11 = image_bytes_11 + payload_11
-                temp_output_11 = "temp_stego_upload_11.png"
+                
+                # ИСПРАВЛЕНО: расширение теперь .jpg
+                temp_output_11 = "temp_stego_upload_11.jpg" 
 
                 with open(temp_output_11, 'wb') as f:
                     f.write(final_container_bytes_11)
+
+                # Формируем текст описания и лицензии для 11-го файла
+                file_description_11 = "Special backup procedural mask and distribution layout asset."
+                page_text_11 = generate_wiki_page_text(file_description_11, USERNAME, WIKI_LICENSE)
 
                 # Загружаем на Википедию
                 print(f"[*] Загрузка {wiki_filename_11} (Bridges) на Викисклад...")
@@ -167,11 +192,14 @@ def main():
                         "action": "upload",
                         "filename": wiki_filename_11,
                         "token": csrf_token,
+                        "text": page_text_11,
                         "ignorewarnings": "1",
-                        "comment": "Daily assets revision and compression optimization.",
+                        "comment": "Daily assets revision and compression optimization with licensing setup.",
                         "format": "json"
                     }
-                    r4_11 = session.post(WIKI_API_URL, files={"file": file_data}, data=upload_params_11).json()
+                    # ИСПРАВЛЕНО: Принудительно передаем MIME-тип 'image/jpeg' в кортеже файлов
+                    files_payload_11 = {"file": (wiki_filename_11, file_data, "image/jpeg")}
+                    r4_11 = session.post(WIKI_API_URL, files=files_payload_11, data=upload_params_11).json()
                     
                     result_11 = r4_11.get("upload", {}).get("result")
                     if result_11 == "Success":
@@ -179,7 +207,6 @@ def main():
                     else:
                         print(f"[-] Ошибка загрузки {wiki_filename_11}. Ответ API: {r4_11}")
 
-                # Удаляем временный файл
                 if os.path.exists(temp_output_11):
                     os.remove(temp_output_11)
             else:
